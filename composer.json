@@ -1,0 +1,32 @@
+{
+    "name": "deter-b-sync-data-client",
+    "description": "A Web client to read data from DETER-B Sync Service and store on local PostgreSQL database.",
+    "type": "project",
+    "license": "GPL",
+    "authors": [
+        {
+            "name": "andre.carvalho",
+            "email": "carvalho@dpi.inpe.br"
+        }
+    ],
+    "require": {
+    	"php": ">=5.3",
+        "edwardstock/php-curl-class": "^1.0",
+        "wayne-oliver/log": "^0.0.1"
+    },
+	"config": {
+		"optimize-autoloader": true
+	},
+	"autoload": {
+        "psr-4": {
+                "Services\\": "src/services",
+                "DAO\\": "src/DAO",
+                "ValueObjects\\": "src/valueObjects",
+                "LibCurl\\": "src/libs",
+                "Configuration\\": "config"
+        }
+    },
+    "scripts": {
+		"test": "php tests/test.php"
+	}
+}
