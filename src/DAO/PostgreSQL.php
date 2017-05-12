@@ -47,6 +47,16 @@ class PostgreSQL {
 				$dsn = "pgsql:host=" . $config["host"] . ";port=" . $config["port"] . ";dbname=" .
 						$config["dbname"] . ";user=" . $config["user"] . ";password=" . $config["pass"];
 				$this->conn = new PDO($dsn);
+				try {
+					$this->conn->setAttribute(PDO::ATTR_ERRMODE, true);
+					$this->conn->setAttribute(PDO::ERRMODE_EXCEPTION, true);
+					$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+				} catch (\PDOException $e) {
+					$this->writeErrorLog("The PDO driver return exception: " . $e->getMessage());
+				} catch (Exception $e) {
+					$this->writeErrorLog("Generic exception returned: " . $e->getMessage());
+				}
+				
 			}else {
 				$this->writeErrorLog("The PDO driver to PostgreSQL is not present.");
 			}
@@ -74,7 +84,7 @@ class PostgreSQL {
 			$this->logger->log_error($msg);
 		}
 		$this->logger->log_error("ERROR_CODE:" . $this->conn->errorCode());
-		$this->logger->log_error("ERROR_INFO:" . $this->conn->errorInfo());
+		$this->logger->log_error("ERROR_INFO:" . print_r($this->conn->errorInfo(),true));
 	}
 	
 	private function hasDriverPDOPostgreSQL() {
@@ -103,8 +113,13 @@ class PostgreSQL {
 	 */
 	public function select($query) {
 		$exec=false;
-		
-		$exec=$this->conn->query($query);
+		try {
+			$exec=@$this->conn->query($query);
+		} catch (\PDOException $e) {
+			$this->writeErrorLog("The PDO driver return exception: " . $e->getMessage());
+		} catch (\Exception $e) {
+			$this->writeErrorLog("Fail on execute SELECT query. Exception returned: " . $e->getMessage());
+		}
 		
 		if($exec!==false) {
 			return $exec;
@@ -124,23 +139,39 @@ class PostgreSQL {
 	public function execQueryScript($query, $affectedRows) {
 		$exec=false;
 		
-		if(!$this->conn->beginTransaction()) {
-			$this->writeErrorLog("Fail to start transaction.");
-			return false;
-		}
-		
-		$exec=$this->conn->exec($query);
-		
-		if($exec!==false && $exec==$affectedRows) {
-			if(!$this->conn->commit()) {
-				$this->writeErrorLog("Fail to COMMIT transaction.");
+		try {
+			if(empty($query)) {
+				$this->writeErrorLog("Query script is empty.");
 				return false;
 			}
-		}else {
-			$this->writeErrorLog("Fail on execute query script.");
-			if(!$this->conn->rollBack()) {
-				$this->writeErrorLog("Fail to ROLLBACK transaction.");
+		
+			if(!$this->conn->beginTransaction()) {
+				$this->writeErrorLog("Fail to start transaction.");
+				return false;
 			}
+			
+			$exec=$this->conn->exec($query);
+			
+			if($exec!==false) {
+				if(!$this->conn->commit()) {
+					$this->writeErrorLog("Fail to COMMIT transaction.");
+					return false;
+				}
+			}else {
+				$this->writeErrorLog("Fail on execute query script.");
+				if(!$this->conn->rollBack()) {
+					$this->writeErrorLog("Fail to ROLLBACK transaction.");
+				}
+				return false;
+			}
+			
+		} catch (\PDOException $e) {
+			$this->writeErrorLog("The PDO driver return exception: " . $e->getMessage());
+			$this->conn->rollBack();
+			return false;
+		} catch (\Exception $e) {
+			$this->writeErrorLog("General failure. See exception returned: " . $e->getMessage());
+			$this->conn->rollBack();
 			return false;
 		}
 		

@@ -12,7 +12,8 @@
     "require": {
     	"php": ">=5.3",
         "edwardstock/php-curl-class": "^1.0",
-        "wayne-oliver/log": "^0.0.1"
+        "wayne-oliver/log": "^0.0.1",
+        "salsify/json-streaming-parser": "^6.0"
     },
 	"config": {
 		"optimize-autoloader": true
@@ -27,6 +28,6 @@
         }
     },
     "scripts": {
-		"test": "php tests/test.php"
+		"test": "php tests/TestStoreService.php"
 	}
 }

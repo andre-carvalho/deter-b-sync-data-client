@@ -3,6 +3,7 @@
 namespace ValueObjects;
 
 use ValueObjects\Geometry;
+use Configuration\ServiceConfiguration;
 
 /**
  * Used to represent one tuple in DETERB table.
@@ -54,21 +55,21 @@ class DeterbTupleStore {
 
 		if(isset($jsonResponse)) {
 			$record=$jsonResponse;
-			$this->gid = settype($record->gid, "integer");
-			$this->classname = $record->classname;
-			$this->areatotalkm = settype($record->areatotalkm, "double");
-			$this->areamunkm = settype($record->areamunkm, "double");
-			$this->areauckm = settype($record->areauckm, "double");
-			$this->date = $record->date;
-			$this->uf = $record->uf;
-			$this->county = $record->county;
-			$this->uc = $record->uc;
-			$this->satellite = $record->satellite;
-			$this->sensor = $record->sensor;
-			$this->lot = $record->lot;
-			$this->orbitpoint = $record->orbitpoint;
-			$this->quadrant = $record->quadrant;
-			$this->geometry = new Geometry($record->geometry);
+			$this->gid = $record["gid"];
+			$this->classname = $record["classname"];
+			$this->areatotalkm = $record["areatotalkm"];
+			$this->areamunkm = $record["areamunkm"];
+			$this->areauckm = $record["areauckm"];
+			$this->date = $record["date"];
+			$this->uf = $record["uf"];
+			$this->county = $record["county"];
+			$this->uc = $record["uc"];
+			$this->satellite = $record["satellite"];
+			$this->sensor = $record["sensor"];
+			$this->lot = $record["lot"];
+			$this->orbitpoint = $record["orbitpoint"];
+			$this->quadrant = $record["quadrant"];
+			$this->geometry = new Geometry($record["geometries"]);
 		}
 	}
 	

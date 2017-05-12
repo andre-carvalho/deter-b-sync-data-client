@@ -38,14 +38,14 @@ class Geometry {
 	}
 
 	function __construct($jsonResponse=null) {
-		if(isset($jsonResponse)) {
-			$this->polygon=$jsonResponse->polygon;
+		if(isset($jsonResponse) && ($jsonResponse["type"]==="Polygon" || $jsonResponse["type"]==="MultiPolygon") ) {
+			$this->polygon = json_encode($jsonResponse);
 		}
 	}
 
 	public function toPostgisSQLFragment() {
 		$conf = ServiceConfiguration::defines();
-		$sql = 'ST_SetSRID(ST_GeomFromGeoJSON('.$this->polygon.'), '.$conf["SRID"].')';
+		$sql = "ST_SetSRID(ST_GeomFromGeoJSON('".$this->polygon."'), ".$conf["SRID"].")";
 		return $sql;
 	}
 

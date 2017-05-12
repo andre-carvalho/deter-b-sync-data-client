@@ -3,6 +3,7 @@
 namespace ValueObjects;
 
 use ValueObjects\DeterbTupleStore;
+use Configuration\ServiceConfiguration;
 
 /**
  * Used to represent one package data to apply in DETERB table.
@@ -35,9 +36,12 @@ class DeterbTableStore {
 	
 	function __construct($jsonResponse=null) {
 		if(isset($jsonResponse)) {
-			$this->insertTuples = $jsonResponse->inserts;
-			$this->updateTuples = $jsonResponse->updates;
-			$this->deleteTuples = $jsonResponse->deletes;
+			$json = json_decode($jsonResponse, true);
+			if(!is_null($json)) {
+				$this->insertTuples = ( isset($json["inserts"])?($json["inserts"]):(null) );
+				$this->updateTuples = ( isset($json["updates"])?($json["updates"]):(null) );
+				$this->deleteTuples = ( isset($json["deletes"])?($json["deletes"]):(null) );
+			}
 		}
 	}
 	
@@ -46,35 +50,39 @@ class DeterbTableStore {
 	 * @return string, The SQL script to create table on database.
 	 */
 	public function getSQLToCreateTableStore() {
+		$config = ServiceConfiguration::defines();
 		$sql="";
-		$sql.="CREATE TABLE public.deterb_sync_cra ".
-		$sql.="( ".
-		$sql.="gid bigint NOT NULL, ".
-		$sql.="classname character varying(254), ".
-		$sql.="areatotalkm numeric, ".
-		$sql.="areamunkm double precision, ".
-		$sql.="areauckm double precision, ".
-		$sql.="date date, ".
-		$sql.="uf character varying(2), ".
-		$sql.="county text, ".
-		$sql.="uc character varying, ".
-		$sql.="satellite character varying(13), ".
-		$sql.="sensor character varying(10), ".
-		$sql.="lot character varying(254), ".
-		$sql.="orbitpoint character varying(10), ".
-		$sql.="quadrant character varying(5), ".
-		$sql.="geom geometry, ".
-		$sql.="CONSTRAINT deterb_sync_cra_pk PRIMARY KEY (gid) ".
-		$sql.=") ".
-		$sql.="WITH ( ".
-		$sql.="OIDS=FALSE ".
-		$sql.="); ".
-		$sql.="ALTER TABLE public.deterb_sync_cra ".
-		$sql.="OWNER TO postgres; ".
-		$sql.="CREATE INDEX deterb_sync_cra_geom_index ".
-		$sql.="ON public.deterb_sync_cra ".
-		$sql.="USING gist ".
-		$sql.="(geom);";
+		$sql="CREATE TABLE " .
+		$config["SCHEMA"] . "." . $config["DATA_TABLE"] .
+		" ( ".
+		"gid serial NOT NULL, ".
+		"classname character varying(254), ".
+		"quadrant character varying(5), ".
+		"orbitpoint character varying(10), ".
+		"date date, ".
+		"lot character varying(254), ".
+		"sensor character varying(10), ".
+		"satellite character varying(13), ".
+		"areatotalkm double precision, ".
+		"areamunkm double precision, ".
+		"areauckm double precision, ".
+		"county character varying(254), ".
+		"uf character varying(2), ".
+		"uc character varying(254), ".
+		"geom geometry, ".
+		"CONSTRAINT " . $config["DATA_TABLE"] . "_pk PRIMARY KEY (gid) ".
+		") ".
+		"WITH ( ".
+		"OIDS=FALSE ".
+		"); ".
+		"ALTER TABLE ".
+		$config["SCHEMA"] . "." . $config["DATA_TABLE"] .
+		" OWNER TO postgres; ".
+		"CREATE INDEX " . $config["DATA_TABLE"] . "_geom_index ".
+		"ON ".
+		$config["SCHEMA"] . "." . $config["DATA_TABLE"] .
+		" USING gist ".
+		"(geom);";
 		
 		return $sql;
 	}
@@ -87,8 +95,8 @@ class DeterbTableStore {
 	public function toSQLInsert(&$numRows) {
 		$sql=false;
 		$numRows=0;
-		if(isset($this->insertTuples) && $this->insertTuples->length) {
-			$index = $this->insertTuples->length;
+		$index=count($this->insertTuples);
+		if(is_array($this->insertTuples) && $index>0) {
 			for ($i = 0; $i < $index; $i++) {
 				$numRows++;
 				$tuple = new DeterbTupleStore($this->insertTuples[$i]);
