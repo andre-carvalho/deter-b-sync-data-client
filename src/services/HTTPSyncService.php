@@ -1,12 +1,12 @@
 <?php
-namespace DAO;
+namespace Services;
 
 use LibCurl\LibCurl;
-use Log\Log;
+use DAO\GeneralLog;
 use Configuration\ServiceConfiguration;
 use ValueObjects\DeterbTupleStore;
 use DateTime;
-use \DateTimeZone;
+use DateTimeZone;
 
 /**
  * @abstract Allow to communicate with HTTP Sync Service via API to read data.
@@ -23,23 +23,11 @@ class HTTPSyncService {
 	protected $hashKey = null;
 	protected $curl = null;
 	protected $logger = null;
-	protected $logDir = null;
-	protected $logEnable = true;
 	
-	function __construct($logDir="log/sync_service") {
+	function __construct() {
 		
-		$this->logDir = $logDir;
-		
-		if ( !is_dir($this->logDir) ) {
-			if(!mkdir($this->logDir, 0777, true)) {
-				// Failed to create log folder. Disabling log!
-				$this->logEnable=false;
-			}
-		}
-		
-		if($this->logEnable) {
-			$this->logger = new Log($this->logDir);
-		}
+		$logDir = "sync_service";
+		$this->logger = new GeneralLog($logDir);
 		
 		$this->curl = new LibCurl();
 		$this->doAuthentication();
@@ -49,25 +37,17 @@ class HTTPSyncService {
 		$this->curl->close();
 	}
 	
-	private function writeWarningLog($msg="") {
-		if(!$this->logEnable) {
-			return false;
-		}
-		if(!empty($msg)) {
-			$this->logger->log_warn($msg);
-		}
-	}
-	
+	/**
+	 * Write more detailed log info provided from CURL class.
+	 * @param string $msg, the message about the fail.
+	 */	
 	private function writeErrorLog($msg="") {
-		if(!$this->logEnable) {
-			return false;
-		}
 		if(!empty($msg)) {
-			$this->logger->log_error($msg);
+			$this->logger->writeErrorLog($msg);
 		}
 		if ($this->curl->error) {
-			$this->logger->log_error("ErrorCode:".$this->curl->errorCode);
-			$this->logger->log_error("ErrorMsg:".$this->curl->errorMessage);
+			$this->logger->writeErrorLog("ErrorCode:".$this->curl->errorCode);
+			$this->logger->writeErrorLog("ErrorMsg:".$this->curl->errorMessage);
 		}
 	}
 	
@@ -76,9 +56,23 @@ class HTTPSyncService {
 	 */
 	private function doAuthentication() {
 		$config = ServiceConfiguration::syncservice();
-		$bodyData = '{"usuario":"'.$config["user"].'", "senha":"'.$config["pass"].'"}';
+		if (empty ( $config )) {
+			$this->writeErrorLog("Missing sync service configuration.");
+			return false;
+		}
+		/* $bodyData = '{"usuario":"'.$config["user"].'", "senha":"'.$config["pass"].'"}';
 		$host = $config["host"].'login';
-		$this->hashKey = $this->curl->post($host, $bodyData);
+		$this->hashKey = $this->curl->post($host, $bodyData); */
+		
+		$host = $config["host"].'login/'.$config["user"].'/'.$config["pass"];
+		$this->curl->get($host);
+		$this->hashKey = $this->curl->response->hashKey;
+		
+		if ($this->curl->error || $this->curl->httpStatusCode!==200 ) {
+			$this->hashKey = null;
+			$this->writeErrorLog();
+			return false;
+		}
 	}
 	
 	/**
@@ -87,7 +81,18 @@ class HTTPSyncService {
 	 * @return DeterbTableStore or false: Return the DeterbTableStore instance or false otherwise.
 	 */
 	public function getAllGeometries() {
+		
+		if(!$this->hashKey) {
+			$this->writeErrorLog("The hash key is undefined.");
+			return false;
+		}
+		
 		$config = ServiceConfiguration::syncservice();
+		
+		if (empty ( $config )) {
+			$this->writeErrorLog("Missing sync service configuration.");
+			return false;
+		}
 		
 		$URL = $config["host"].'allgeometries?hashKey='.$this->hashKey;
 		//$this->curl->resetCurl();
@@ -122,13 +127,24 @@ class HTTPSyncService {
 	 * @return string or false: Return the name of read file or false otherwise.
 	 */
 	public function downloadAllGeometries() {
+		
+		if(!$this->hashKey) {
+			$this->writeErrorLog("The hash key is undefined.");
+			return false;
+		}
+		
 		$config = ServiceConfiguration::syncservice();
+		
+		if (empty ( $config )) {
+			$this->writeErrorLog("Missing sync service configuration.");
+			return false;
+		}
 	
-		$URL = $config["host"].'allgeometries?hashKey='.$this->hashKey;
+		$URL = $config["host"].'allgeometries/'.$this->hashKey;
 
 		
 		// USE TEST URL
-		$URL = 'http://200.18.85.235/detertool/allgeometries/f80220b6c3a6da4a2e3bc527d8a856ca';
+		//$URL = 'http://200.18.85.235/detertool/allgeometries/f80220b6c3a6da4a2e3bc527d8a856ca';
 		//$URL = 'http://localhost/html/sleep.php';
 		//$this->curl->resetCurl(); // TODO: see if this is necessary...
 		
@@ -146,20 +162,22 @@ class HTTPSyncService {
 		
 		// sets curl option to save response directly to a file
 		@$this->curl->setOption(CURLOPT_HEADER, 0);
-		$this->curl->setOption(CURLOPT_TIMEOUT, 20);// wait 20 seconds before send timeout signal.
+		$this->curl->setOption(CURLOPT_TIMEOUT, $config["timeout"]);
 		$this->curl->setOption(CURLOPT_FOLLOWLOCATION, true);
 		$this->curl->setOption(CURLOPT_FILE, $fp);// write curl response to file
 		
 		$this->curl->get($URL);
-			
-		if ($this->curl->error) {
-			$this->writeErrorLog();
-			fclose($fp);
-			unlink($tmpFile);
-			return false;
+		$sucess = (!$this->curl->error && $this->curl->response===true && $this->curl->httpStatusCode===200);
+		
+		$MAX_REPEAT = $config["max_times"];// Used to control the number of times we call the service when one error is find.
+		while(!$sucess && $MAX_REPEAT>0) {
+			$this->curl->get($URL);
+			$sucess = (!$this->curl->error && $this->curl->response===true && $this->curl->httpStatusCode===200);
+			$this->writeErrorLog("Repeat time:".$MAX_REPEAT);
+			$MAX_REPEAT--;
 		}
-	
-		if($this->curl->response===true && $this->curl->httpStatusCode===200) { // && $this->curl->responseHeaders['Content-Type']=="text/plain") {
+
+		if($sucess) {
 			// move temporary file to rawData directory
 			$finalFile = __DIR__ . '/../../rawData/' . $baseFileName . '.sql';
 			

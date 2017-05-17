@@ -2,13 +2,11 @@
 namespace DAO;
 
 use LibCurl\LibCurl;
-use Log\Log;
 use Configuration\ServiceConfiguration;
 use PDO;
 
-
 /**
- * @abstract Allow to connect and run SQL scripts over PostgreSQL service. 
+ * @abstract Allow to connect and run SQL scripts over PostgreSQL service using the PDO driver.
  * 
  * @since January of 2017
  * 
@@ -19,38 +17,27 @@ class PostgreSQL {
 	
 	protected $conn = NULL;
 	protected $logger = NULL;
-	protected $logDir = NULL;
-	protected $logEnable = true;
 	
-	function __construct($logDir="log/postgresql") {
-		
-		$this->logDir = $logDir;
-		
-		if ( !is_dir($this->logDir) ) {
-			if(!mkdir($this->logDir, 0777, true)) {
-				// Failed to create log folder. Disabling log!
-				$this->logEnable=false;
-			}
-		}
-		
-		if($this->logEnable) {
-			$this->logger = new Log($this->logDir);
-		}
+	/**
+	 * @abstract The default constructor makes a connection to database and create a logfile instance.
+	 */
+	function __construct() {
+
+		$this->logger = new GeneralLog("postgres");
 		
 		$config = ServiceConfiguration::postgresql();
-		
-		if (empty ( $config )) {
-			$this->logger->log_error("Missing default PostgreSQL configuration.");
+		if( empty ( $config ) ) {
+			$this->logger->writeErrorLog("Missing default PostgreSQL configuration.");
 		}else {
-			if($this->hasDriverPDOPostgreSQL()) {
+			if( $this->hasDriverPDOPostgreSQL() ) {
 						//pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass
 				$dsn = "pgsql:host=" . $config["host"] . ";port=" . $config["port"] . ";dbname=" .
 						$config["dbname"] . ";user=" . $config["user"] . ";password=" . $config["pass"];
-				$this->conn = new PDO($dsn);
+				
 				try {
-					$this->conn->setAttribute(PDO::ATTR_ERRMODE, true);
-					$this->conn->setAttribute(PDO::ERRMODE_EXCEPTION, true);
-					$this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+					$this->conn = new PDO($dsn);
+					$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+					// $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
 				} catch (\PDOException $e) {
 					$this->writeErrorLog("The PDO driver return exception: " . $e->getMessage());
 				} catch (Exception $e) {
@@ -65,26 +52,21 @@ class PostgreSQL {
 	
 	function __destruct() {
 		$this->closeConnection();
+		$this->logger->__destruct();
 	}
-	
-	private function writeWarningLog($msg="") {
-		if(!$this->logEnable) {
-			return false;
-		}
-		if(!empty($msg)) {
-			$this->logger->log_warn($msg);
-		}
-	}
-	
+
+	/**
+	 * Write more detailed log info provided from PostgreSQL driver.
+	 * @param string $msg, the message about the fail.
+	 */
 	private function writeErrorLog($msg="") {
-		if(!$this->logEnable) {
-			return false;
-		}
 		if(!empty($msg)) {
-			$this->logger->log_error($msg);
+			$this->logger->writeErrorLog($msg);
 		}
-		$this->logger->log_error("ERROR_CODE:" . $this->conn->errorCode());
-		$this->logger->log_error("ERROR_INFO:" . print_r($this->conn->errorInfo(),true));
+		if($this->conn->errorCode()) {
+			$this->logger->writeErrorLog("ERROR_CODE:" . $this->conn->errorCode());
+			$this->logger->writeErrorLog("ERROR_INFO:" . print_r($this->conn->errorInfo(),true));
+		}
 	}
 	
 	private function hasDriverPDOPostgreSQL() {
@@ -96,6 +78,30 @@ class PostgreSQL {
 		}else {
 			return false;
 		}
+	}
+	
+	public function begin() {
+		if(!$this->conn->beginTransaction()) {
+			$this->writeErrorLog("Fail to BEGIN transaction.");
+			return false;
+		}
+		return true;
+	}
+	
+	public function commit() {
+		if($this->conn->commit()===false) {
+			$this->writeErrorLog("Fail to COMMIT transaction.");
+			return false;
+		}
+		return true;
+	}
+	
+	public function rollback() {
+		if($this->conn->rollBack()===false) {
+			$this->writeErrorLog("Fail to ROLLBACK transaction.");
+			return false;
+		}
+		return true;
 	}
 	
 	public function isConnected() {
@@ -113,8 +119,14 @@ class PostgreSQL {
 	 */
 	public function select($query) {
 		$exec=false;
+		
+		if(empty($query)) {
+			$this->logger->writeErrorLog("Missing query.");
+			return false;
+		}
+		
 		try {
-			$exec=@$this->conn->query($query);
+			$exec=$this->conn->query($query);
 		} catch (\PDOException $e) {
 			$this->writeErrorLog("The PDO driver return exception: " . $e->getMessage());
 		} catch (\Exception $e) {
@@ -133,10 +145,10 @@ class PostgreSQL {
 	 * Execute a set of the query statements. 
 	 * 
 	 * @param string $query, the query script to execute.
-	 * @param integer $affectedRows, affected lines expected.
+	 * @param integer $affectedRows, affected lines expected. (DISABLED)
 	 * @return boolean, true on success or false otherwise.
 	 */
-	public function execQueryScript($query, $affectedRows) {
+	public function execQueryScript($query){ //, $affectedRows) {
 		$exec=false;
 		
 		try {
@@ -144,34 +156,19 @@ class PostgreSQL {
 				$this->writeErrorLog("Query script is empty.");
 				return false;
 			}
-		
-			if(!$this->conn->beginTransaction()) {
-				$this->writeErrorLog("Fail to start transaction.");
-				return false;
-			}
 			
 			$exec=$this->conn->exec($query);
 			
-			if($exec!==false) {
-				if(!$this->conn->commit()) {
-					$this->writeErrorLog("Fail to COMMIT transaction.");
-					return false;
-				}
-			}else {
-				$this->writeErrorLog("Fail on execute query script.");
-				if(!$this->conn->rollBack()) {
-					$this->writeErrorLog("Fail to ROLLBACK transaction.");
-				}
-				return false;
-			}
-			
 		} catch (\PDOException $e) {
 			$this->writeErrorLog("The PDO driver return exception: " . $e->getMessage());
-			$this->conn->rollBack();
 			return false;
 		} catch (\Exception $e) {
 			$this->writeErrorLog("General failure. See exception returned: " . $e->getMessage());
-			$this->conn->rollBack();
+			return false;
+		}
+		
+		if($exec===false) {
+			$this->writeErrorLog("Fail on execute script.");
 			return false;
 		}
 		

@@ -5,7 +5,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use ValueObjects\DeterbTableStore;
 use Services\PostgreSQLService;
-
+/* 
 $data = file_get_contents ("/home/dados/workspace-php5/deter-b-sync-data-client/rawData/all-DETERB.json");
 
 echo "STRLEN=".strlen($data);
@@ -17,14 +17,15 @@ echo "|";
 print_r($json);
 echo "|";
 exit();
-
+ */
 $error = "";
 if(!PostgreSQLService::createTable($error)) {
 	echo $error;
 }else {
-	if(!PostgreSQLService::pushData($data, $error)) {
+	echo "continue...";
+	/* if(!PostgreSQLService::pushData($data, $error)) {
 		echo $error;
-	}
+	} */
 }
 
 echo "\r\nfinish!!";

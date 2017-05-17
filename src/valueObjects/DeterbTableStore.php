@@ -49,8 +49,9 @@ class DeterbTableStore {
 	 * Makes the SQL script to create the table.
 	 * @return string, The SQL script to create table on database.
 	 */
-	public function getSQLToCreateTableStore() {
+	public static function getSQLToCreateTableStore() {
 		$config = ServiceConfiguration::defines();
+		$postgres = ServiceConfiguration::postgresql();
 		$sql="";
 		$sql="CREATE TABLE " .
 		$config["SCHEMA"] . "." . $config["DATA_TABLE"] .
@@ -77,7 +78,7 @@ class DeterbTableStore {
 		"); ".
 		"ALTER TABLE ".
 		$config["SCHEMA"] . "." . $config["DATA_TABLE"] .
-		" OWNER TO postgres; ".
+		" OWNER TO ".$postgres["user"]."; ".
 		"CREATE INDEX " . $config["DATA_TABLE"] . "_geom_index ".
 		"ON ".
 		$config["SCHEMA"] . "." . $config["DATA_TABLE"] .
