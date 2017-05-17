@@ -29,6 +29,6 @@
     },
     "scripts": {
 		"test": "php tests/TestAllGeometriesFromScript.php",
-		"install": "php install/install.php"
+		"startenv": "php install/install.php"
 	}
 }
