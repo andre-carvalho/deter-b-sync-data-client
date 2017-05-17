@@ -28,6 +28,7 @@
         }
     },
     "scripts": {
-		"test": "php tests/TestStoreService.php"
+		"test": "php tests/TestStoreService.php",
+		"install": "php install/install.php"
 	}
 }
