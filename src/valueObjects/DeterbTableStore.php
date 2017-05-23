@@ -71,6 +71,7 @@ class DeterbTableStore {
 		"uf character varying(2), ".
 		"uc character varying(254), ".
 		"geom geometry, ".
+		"fake_point geometry, ".
 		"CONSTRAINT " . $config["DATA_TABLE"] . "_pk PRIMARY KEY (gid) ".
 		") ".
 		"WITH ( ".
