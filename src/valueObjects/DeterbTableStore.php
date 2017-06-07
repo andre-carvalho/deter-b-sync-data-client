@@ -61,6 +61,7 @@ class DeterbTableStore {
 		"quadrant character varying(5), ".
 		"orbitpoint character varying(10), ".
 		"date date, ".
+		"date_audit date, ".
 		"lot character varying(254), ".
 		"sensor character varying(10), ".
 		"satellite character varying(13), ".
