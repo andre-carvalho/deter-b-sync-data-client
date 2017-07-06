@@ -141,6 +141,25 @@ class PostgreSQLDataService extends PostgreSQLService {
 		return true;
 	}
 	
+	//select max(date) FROM public.deter_table
+	/**
+	 * Read the max value to field date.
+	 *
+	 * @param string $error, allow read the error message.
+	 * @return boolean, The max date on success or false otherwise.
+	 */
+	public function readMaxDate(&$error) {
+		$config = ServiceConfiguration::defines();
+	
+		if( empty ( $config ) ) {
+			$error = "Missing the metadata tables configuration.";
+			return false;
+		}
+	
+		$tableName = $config["SCHEMA"].".".$config["DATA_TABLE"];
+		return $this->execSQL($tableName, DeterbTableStore::getSQL2ReadMaxDateFromData(), $error);
+	}
+	
 	/**
 	 * WARNING: THIS METHOD ARE USED ON ANOTHER CENARIUS WHEN SERVICE RESPONSES IN JSON FORMAT.
 	 * Insert data into PostgreSQL table.

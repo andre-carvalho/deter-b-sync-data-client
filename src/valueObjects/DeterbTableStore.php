@@ -147,4 +147,17 @@ class DeterbTableStore {
 		return $sql;
 	}
 	
+	/**
+	 * Makes a SQL script to read max date from table.
+	 * @return <boolean, string>, The SQL script to read value or false otherwise.
+	 */
+	public static function getSQL2ReadMaxDateFromData() {
+		$config = ServiceConfiguration::defines();
+		$sql="";
+
+		$sql="SELECT MAX(date) FROM " .
+			$config["SCHEMA"] . "." . $config["DATA_TABLE"];
+		
+		return $sql;
+	}
 }

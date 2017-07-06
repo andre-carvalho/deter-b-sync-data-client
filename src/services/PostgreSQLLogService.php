@@ -89,4 +89,25 @@ class PostgreSQLLogService extends PostgreSQLService {
 		}
 		return true;
 	}
+	
+	/**
+	 * Read the last state from log table.
+	 *
+	 * @param string $error, allow read the error message.
+	 * @return boolean, true on success or false otherwise.
+	 */
+	public function readLastStateFromLogTable(&$error) {
+		$config = ServiceConfiguration::defines();
+	
+		if( empty ( $config ) ) {
+			$error = "Missing the metadata tables configuration.";
+			return false;
+		}
+		
+		$log = new LogTable();
+		$sql=$log->getSQLToReadLastStatus();
+	
+		$tableName = $config["SCHEMA"].".".$config["LOG_TABLE"];
+		return $this->execSQL($tableName, $sql, $error);
+	}
 }

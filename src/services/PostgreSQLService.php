@@ -66,6 +66,34 @@ class PostgreSQLService {
 	}
 	
 	/**
+	 * Execute one query over database and read the result.
+	 *
+	 * @param string $tableName, the name of table to use in query string for test if it exists.
+	 * @param string $sql, the query to execute.
+	 * @param string $error, allow read the error message.
+	 * 
+	 * @return array|false, The result in array format or false otherwise. 
+	 */
+	protected function execSQL($tableName, $sql, &$error) {
+		if(!$this->pg) {
+			$error = "No database connect.";
+			return false;
+		}
+		
+		if( !$this->tableExists($tableName, $error) ) {
+			$error = "Log table doesn't exist.";
+			return false;
+		}
+
+		$statement = $this->pg->select($sql);
+		if($statement!==false && get_class($statement) === "PDOStatement") {
+			$result = $statement->fetchAll();
+			return $result;
+		}
+		return false;
+	}
+	
+	/**
 	 * Test if one table exists.
 	 * 
 	 * @param string $error, allow read the error message.
@@ -135,4 +163,6 @@ class PostgreSQLService {
 		}
 		return true;
 	}
+	
+	
 }

@@ -83,6 +83,21 @@ class LogTable {
 
 		return $sql;
 	}
+	
+	/**
+	 * Makes the SQL script for read the last state using a filter by max date.
+	 * @return string, The SQL script to read one value from log table.
+	 */
+	public static function getSQLToReadLastStatus() {
+		$config = ServiceConfiguration::defines();
+		$sql="";
+		$sql =	"SELECT t2.state, t2.detail, t2.date FROM ( " .
+				"SELECT max(date) as date FROM ".
+				$config["SCHEMA"] . "." . $config["LOG_TABLE"] . " ) as t1, " .
+				$config["SCHEMA"] . "." . $config["LOG_TABLE"] . " as t2 " .
+				"WHERE t2.date=t1.date ";
+		return $sql;
+	}
 
 	/**
 	 * Makes a SQL script to insert row on table.
