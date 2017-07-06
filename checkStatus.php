@@ -72,6 +72,7 @@ if(!empty($data)) {
 	$data = "To:carvalho@dpi.inpe.br\n".
 			"From:andrefuncate@gmail.com\n".
 			"Subject: [DETER-B] - Daily check synchronize data.\n".
+			"Content-Type: text/plain; charset=\"utf-8\";\n".
 			$data.
 			"Este email é de uso exclusivo da equipe de TI do INPE.\n".
 			"Caso tenha recebido este email inapropriadamente, descarte-o.\n".
