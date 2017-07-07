@@ -79,6 +79,8 @@ if(!empty($data)) {
 			$data."\n\n\n".
 			"Este email é de uso exclusivo da equipe de TI do INPE.\n".
 			"Caso tenha recebido este email inapropriadamente, descarte-o.\n".
+			"Para ver mais informações sobre a sincronização, acesse este link:".
+			"http://terrabrasilis.info/sync/DETER-B\n".
 			"\n\n\n".
 			"Att. Equipe do projeto DETER-B.\n";
 }
