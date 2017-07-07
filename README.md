@@ -1,7 +1,7 @@
 # deter-b-sync-data-client
 Using the PHP with cURL over DETER-B service API to create a client that synchronize data.
 
-## Dependencies
+## About dependencies
 
 - This project is organized using Composer and the used version is [1.3.1](https://getcomposer.org/download/1.3.1/composer.phar)
 - Other technique used is the [PSR-4 autoload spec](http://www.php-fig.org/psr/psr-4/).
@@ -30,3 +30,13 @@ The expected environment to deployment is composed for:
   ```
   php composer.phar install
   ```
+
+### Prepare environment to run
+- Provide a simple way to build the environment to run this client.
+	- Create necessary directories such as: tmp, config, log and rawData
+	- Create the config file as template
+
+  ```
+  php install/install.php
+  ```
+- After that, open the template configuration file "~config/ServiceConfiguration.php" and change it to your environment values.
