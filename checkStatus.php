@@ -69,7 +69,7 @@ if(!$lastState) {
 }
 
 if(!empty($data)) {
-	$data = "To:carvalho@dpi.inpe.br\n".
+	$data = "To:carvalho@dpi.inpe.br,\n".
 			"From:andrefuncate@gmail.com\n".
 			"Subject: [DETER-B] - Daily check synchronize data.\n".
 			"Content-Type: text/plain; charset=\"utf-8\";\n".
@@ -83,5 +83,5 @@ $mailContentFile = __DIR__ . "/tmp/mail-content.txt";
 
 if(!empty($data) && file_put_contents($mailContentFile, $data)!==false) {
 	//echo ("sendmail carvalho@dpi.inpe.br < " . realpath($mailContentFile));
-	exec("sendmail carvalho@dpi.inpe.br < " . realpath($mailContentFile));
+	exec("/usr/sbin/sendmail carvalho@dpi.inpe.br < " . realpath($mailContentFile));
 }
