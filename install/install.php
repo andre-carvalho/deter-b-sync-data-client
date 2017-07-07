@@ -55,6 +55,14 @@ $configTemplate = "<?php\n".
 "		);\n".
 "		return \$config;\n".
 "	}\n".
+"	\n".
+"	public static function ssmtp() {\n".
+"		\$config = array (\n".
+"				'TO' => 'carvalho@dpi.inpe.br',\n".
+"				'FROM' => 'andrefuncate@gmail.com'\n".
+"		);\n".
+"		return \$config;\n".
+"	}\n".
 "}\n".
 "\n";
 

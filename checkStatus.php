@@ -13,6 +13,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 error_reporting(E_ALL & ~E_NOTICE);
 
+use Configuration\ServiceConfiguration;
 use Services\PostgreSQLLogService;
 use Services\PostgreSQLDataService;
 use DAO\GeneralLog;
@@ -68,20 +69,22 @@ if(!$lastState) {
 	}
 }
 
+$config = ServiceConfiguration::ssmtp();
+
 if(!empty($data)) {
-	$data = "To:carvalho@dpi.inpe.br,\n".
-			"From:andrefuncate@gmail.com\n".
+	$data = "To:".$config["TO"]."\n".
+			"From:".$config["FROM"]."\n".
 			"Subject: [DETER-B] - Daily check synchronize data.\n".
 			"Content-Type: text/plain; charset=\"utf-8\";\n".
-			$data.
+			$data."\n\n\n".
 			"Este email é de uso exclusivo da equipe de TI do INPE.\n".
 			"Caso tenha recebido este email inapropriadamente, descarte-o.\n".
+			"\n\n\n".
 			"Att. Equipe do projeto DETER-B.\n";
 }
 
 $mailContentFile = __DIR__ . "/tmp/mail-content.txt";
 
 if(!empty($data) && file_put_contents($mailContentFile, $data)!==false) {
-	//echo ("sendmail carvalho@dpi.inpe.br < " . realpath($mailContentFile));
-	exec("/usr/sbin/sendmail carvalho@dpi.inpe.br < " . realpath($mailContentFile));
+	exec("/usr/sbin/sendmail ".$config["TO"]." < " . realpath($mailContentFile));
 }
