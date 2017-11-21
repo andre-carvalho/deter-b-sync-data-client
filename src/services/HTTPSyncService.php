@@ -162,7 +162,8 @@ class HTTPSyncService {
 		
 		// sets curl option to save response directly to a file
 		@$this->curl->setOption(CURLOPT_HEADER, 0);
-		$this->curl->setOption(CURLOPT_TIMEOUT, $config["timeout"]);
+		// $this->curl->setOption(CURLOPT_TIMEOUT, $config["timeout"]);
+		$this->curl->setOption(CURLOPT_CONNECTTIMEOUT, $config["timeout"]);
 		$this->curl->setOption(CURLOPT_FOLLOWLOCATION, true);
 		$this->curl->setOption(CURLOPT_FILE, $fp);// write curl response to file
 		
