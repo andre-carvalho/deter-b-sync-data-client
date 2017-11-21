@@ -11,7 +11,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use DAO\HTTPSyncService;
+use Services\HTTPSyncService;
 
 $service = new HTTPSyncService();
 
