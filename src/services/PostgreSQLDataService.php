@@ -141,6 +141,44 @@ class PostgreSQLDataService extends PostgreSQLService {
 		return true;
 	}
 	
+	/**
+	 * Execute the process to insert new data in local PostgreSQL database into a transaction.
+	 * The steps:
+	 *  - Insert new data into table;
+	 *
+	 * @param string $data, the new SQL script data in text format.
+	 * @param string $error, return error message
+	 * @return boolean, true on success or false otherwise.
+	 */
+	public function appendNewData($data, &$error) {
+		if(empty($data)) {
+			$error = "Missing data";
+			$this->writeErrorLog($error);
+			return false;
+		}
+		
+		if(!$this->start()) {// begin
+			$error = "Begin command has failed.";
+			$this->writeErrorLog($error);
+			return false;
+		}
+		
+		if(!$this->pushRawData($data, $error)) {
+			$error .= "\nFailure on push data to data table.";
+			$this->writeErrorLog($error);
+			if($this->stop(false)){// rollback
+				$error .= "\nRollback command has failed.";
+			}
+			return false;
+		}
+		
+		if($this->stop(true)===false){// commit
+			$error .= "\nCommit command has failed.";
+			return false;
+		}
+		return true;
+	}
+	
 	//select max(date) FROM public.deter_table
 	/**
 	 * Read the max value to field date.

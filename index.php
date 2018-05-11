@@ -43,8 +43,16 @@ $error = "";// Used to get the error description from PostgreSQLService methods 
 
 $RAWFILE = "";// The directory path and filename to write the raw data during download.
 
+// Read the last date from output table 
+$last_date = $pgDataService->readMaxDate($error);
+if($last_date===false) {
+	// table not found or database is off
+	if($log) $log->writeErrorLog($error);
+	exit();
+}
+
 $syncService = new HTTPSyncService();
-$RAWFILE = $syncService->downloadAllGeometries();
+$RAWFILE = $syncService->downloadLastGeometries($last_date);
 
 if($RAWFILE===false) {
 	$error = "Failure on download data.";
@@ -66,7 +74,7 @@ if($data===false) {
 	exit();
 }
 
-if(!$pgDataService->renewDataTable($data, $error)) {
+if(!$pgDataService->appendNewData($data, $error)) {
 	if(!$pgLogService->writeLog(0, $error, $RAWFILE)) {
 		if($log) $log->writeErrorLog($error . "\nFailure on write the error on log table.");
 	}

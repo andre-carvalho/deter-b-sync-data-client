@@ -156,7 +156,7 @@ class DeterbTableStore {
 		$sql="";
 
 		$sql="SELECT MAX(date) FROM " .
-			$config["SCHEMA"] . "." . $config["DATA_TABLE"];
+			$config["SCHEMA"] . "." . $config["DATA_TABLE"] . " WHERE date_audit is not null";
 		
 		return $sql;
 	}

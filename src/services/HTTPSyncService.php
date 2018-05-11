@@ -199,4 +199,75 @@ class HTTPSyncService {
 		}
 	}
 	
+	/**
+	 * Load last geometries from a reference date, in SQL script format as from service for insert into local table.
+	 * The tipical url is: http://<URL_BASE>/downloadLastGeometries/<auth_key>/<last_date>
+	 * @return string or false: Return the name of read file or false otherwise.
+	 */
+	public function downloadLastGeometries($last_date) {
+	
+		if(!$this->hashKey) {
+			$this->writeErrorLog("The hash key is undefined.");
+			return false;
+		}
+	
+		$config = ServiceConfiguration::syncservice();
+	
+		if (empty ( $config )) {
+			$this->writeErrorLog("Missing sync service configuration.");
+			return false;
+		}
+	
+		$URL = $config["host"].'getdata/'.$this->hashKey.'/'.$last_date;
+		
+		// This is the file where we save the information
+		$dt = new DateTime();
+		$dt->setTimeZone(new DateTimeZone('America/Sao_Paulo'));
+		$baseFileName = $dt->format('d-m-Y') . "_portion_data";
+		$tmpFile = __DIR__ . '/../../tmp/'.$baseFileName.'.tmp';
+		
+		$fp = fopen( $tmpFile, 'w+');
+		if($fp===false) {
+			$this->writeErrorLog("Fail on open the temporary file.");
+			return false;
+		}
+		
+		// sets curl option to save response directly to a file
+		@$this->curl->setOption(CURLOPT_HEADER, 0);
+		$this->curl->setOption(CURLOPT_CONNECTTIMEOUT, $config["timeout"]);
+		$this->curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+		$this->curl->setOption(CURLOPT_FILE, $fp);// write curl response to file
+		
+		$this->curl->get($URL);
+		$sucess = (!$this->curl->error && $this->curl->response===true && $this->curl->httpStatusCode===200);
+		
+		$MAX_REPEAT = $config["max_times"];// Used to control the number of times we call the service when one error is find.
+		while(!$sucess && $MAX_REPEAT>0) {
+			$this->curl->get($URL);
+			$sucess = (!$this->curl->error && $this->curl->response===true && $this->curl->httpStatusCode===200);
+			$this->writeErrorLog("Repeat time:".$MAX_REPEAT);
+			$MAX_REPEAT--;
+		}
+		
+		if($sucess) {
+			// move temporary file to rawData directory
+			$finalFile = __DIR__ . '/../../rawData/' . $baseFileName . '.sql';
+				
+			if(rename($tmpFile, $finalFile)===false) {
+				$this->writeErrorLog("Failure on move temporary file to work directory.");
+				fclose($fp);
+				unlink($tmpFile);
+				return false;
+			}
+				
+			fclose($fp);
+			return $finalFile;
+		}else {
+			$this->writeErrorLog("Failure of response from downloadAllGeometries call.");
+			fclose($fp);
+			unlink($tmpFile);
+			return false;
+		}
+	}
+	
 }
