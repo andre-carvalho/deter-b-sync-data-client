@@ -60,14 +60,11 @@ class HTTPSyncService {
 			$this->writeErrorLog("Missing sync service configuration.");
 			return false;
 		}
-		/* $bodyData = '{"usuario":"'.$config["user"].'", "senha":"'.$config["pass"].'"}';
-		$host = $config["host"].'login';
-		$this->hashKey = $this->curl->post($host, $bodyData); */
 		
 		$host = $config["host"].'login/'.$config["user"].'/'.$config["pass"];
 		$this->curl->get($host);
-		$this->hashKey = $this->curl->response->hashKey;
 		
+		$this->hashKey = $this->curl->response->hashKey;
 		if ($this->curl->error || $this->curl->httpStatusCode!==200 ) {
 			$this->hashKey = null;
 			$this->writeErrorLog();

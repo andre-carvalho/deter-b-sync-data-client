@@ -45,14 +45,15 @@ $RAWFILE = "";// The directory path and filename to write the raw data during do
 
 // Read the last date from output table 
 $last_date = $pgDataService->readMaxDate($error);
-if($last_date===false) {
+
+if($last_date===false || count($last_date)!=1) {
 	// table not found or database is off
 	if($log) $log->writeErrorLog($error);
 	exit();
 }
 
 $syncService = new HTTPSyncService();
-$RAWFILE = $syncService->downloadLastGeometries($last_date);
+$RAWFILE = $syncService->downloadLastGeometries($last_date[0][0]);
 
 if($RAWFILE===false) {
 	$error = "Failure on download data.";

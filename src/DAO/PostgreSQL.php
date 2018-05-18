@@ -63,7 +63,7 @@ class PostgreSQL {
 		if(!empty($msg)) {
 			$this->logger->writeErrorLog($msg);
 		}
-		if($this->conn->errorCode()) {
+		if($this->conn && $this->conn->errorCode()) {
 			$this->logger->writeErrorLog("ERROR_CODE:" . $this->conn->errorCode());
 			$this->logger->writeErrorLog("ERROR_INFO:" . print_r($this->conn->errorInfo(),true));
 		}
