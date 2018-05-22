@@ -155,7 +155,7 @@ class DeterbTableStore {
 		$config = ServiceConfiguration::defines();
 		$sql="";
 
-		$sql="SELECT MAX(date) FROM " .
+		$sql="SELECT MAX(date) + 1 FROM " .
 			$config["SCHEMA"] . "." . $config["DATA_TABLE"] . " WHERE date_audit is not null";
 		
 		return $sql;
