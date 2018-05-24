@@ -43,8 +43,8 @@ $error = "";// Used to get the error description from PostgreSQLService methods 
 
 $RAWFILE = "";// The directory path and filename to write the raw data during download.
 
-// Read the last date from output table 
-$last_date = $pgDataService->readMaxDate($error);
+// Read the last auditing date from output table 
+$last_date = $pgDataService->readMaxAuditDate($error);
 
 if($last_date===false || count($last_date)!=1) {
 	// table not found or database is off
