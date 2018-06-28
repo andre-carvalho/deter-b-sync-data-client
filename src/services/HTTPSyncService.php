@@ -260,7 +260,7 @@ class HTTPSyncService {
 			fclose($fp);
 			return $finalFile;
 		}else {
-			$this->writeErrorLog("Failure of response from downloadAllGeometries call.");
+			$this->writeErrorLog("Failure of response from downloadLastGeometries call.");
 			fclose($fp);
 			unlink($tmpFile);
 			return false;

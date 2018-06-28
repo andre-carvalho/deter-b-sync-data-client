@@ -179,12 +179,29 @@ class PostgreSQLDataService extends PostgreSQLService {
 		return true;
 	}
 	
-	//select max(date) FROM public.deter_table
 	/**
-	 * Read the max value to field date.
+	 * Read the max value to field auditing date.
 	 *
 	 * @param string $error, allow read the error message.
-	 * @return boolean, The max date on success or false otherwise.
+	 * @return boolean, The next day of the max auditing date on success or false otherwise.
+	 */
+	public function readMaxAuditDate(&$error) {
+		$config = ServiceConfiguration::defines();
+	
+		if( empty ( $config ) ) {
+			$error = "Missing the metadata tables configuration.";
+			return false;
+		}
+	
+		$tableName = $config["SCHEMA"].".".$config["DATA_TABLE"];
+		return $this->execSQL($tableName, DeterbTableStore::getSQL2ReadMaxAuditDateFromData(), $error);
+	}
+
+		/**
+	 * Read the max value to field image date.
+	 *
+	 * @param string $error, allow read the error message.
+	 * @return boolean, The max image date on success or false otherwise.
 	 */
 	public function readMaxDate(&$error) {
 		$config = ServiceConfiguration::defines();

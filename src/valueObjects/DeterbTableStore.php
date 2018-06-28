@@ -148,14 +148,28 @@ class DeterbTableStore {
 	}
 	
 	/**
-	 * Makes a SQL script to read max date from table.
+	 * Makes a SQL script to read the next day of the max auditing date from table.
+	 * @return <boolean, string>, The SQL script to read value or false otherwise.
+	 */
+	public static function getSQL2ReadMaxAuditDateFromData() {
+		$config = ServiceConfiguration::defines();
+		$sql="";
+
+		$sql="SELECT MAX(date_audit) + 1 FROM " .
+			$config["SCHEMA"] . "." . $config["DATA_TABLE"] . " WHERE date_audit is not null";
+		
+		return $sql;
+	}
+
+	/**
+	 * Makes a SQL script to read max image date from table.
 	 * @return <boolean, string>, The SQL script to read value or false otherwise.
 	 */
 	public static function getSQL2ReadMaxDateFromData() {
 		$config = ServiceConfiguration::defines();
 		$sql="";
 
-		$sql="SELECT MAX(date) + 1 FROM " .
+		$sql="SELECT MAX(date) FROM " .
 			$config["SCHEMA"] . "." . $config["DATA_TABLE"] . " WHERE date_audit is not null";
 		
 		return $sql;
