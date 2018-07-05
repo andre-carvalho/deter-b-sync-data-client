@@ -109,7 +109,7 @@ class PostgreSQLService {
 		$tableExists = $this->pg->select($query);
 		if(get_class($tableExists) === "PDOStatement") {
 			$result = $tableExists->fetchAll();
-			return $result[0][exists];
+			return $result[0]['exists'];
 		}
 		return false;
 	}
@@ -132,7 +132,7 @@ class PostgreSQLService {
 			// table doesn't exist. Create then.
 			
 			if(!$this->pg->execQueryScript($sql)) {
-				$error = "Don't was created database table: (".$tableName.")";
+				$error = "Do not was created database table: (".$tableName.")";
 				return false;
 			}
 		}

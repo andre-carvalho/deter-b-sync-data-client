@@ -49,11 +49,13 @@ $last_date = $pgDataService->readMaxAuditDate($error);
 if($last_date===false || count($last_date)!=1) {
 	// table not found or database is off
 	if($log) $log->writeErrorLog($error);
-	exit();
+	$last_date = '2017-08-03';//'2017-07-31';
+}else{
+	$last_date = $last_date[0][0];
 }
 
 $syncService = new HTTPSyncService();
-$RAWFILE = $syncService->downloadLastGeometries($last_date[0][0]);
+$RAWFILE = $syncService->downloadLastGeometries($last_date);
 
 if($RAWFILE===false) {
 	$error = "Failure on download data.";
@@ -75,11 +77,18 @@ if($data===false) {
 	exit();
 }
 
-if(!$pgDataService->appendNewData($data, $error)) {
+if(!$pgDataService->renewDataTable($data, $error)) {
 	if(!$pgLogService->writeLog(0, $error, $RAWFILE)) {
 		if($log) $log->writeErrorLog($error . "\nFailure on write the error on log table.");
 	}
 	exit();
 }
+
+// if(!$pgDataService->appendNewData($data, $error)) {
+// 	if(!$pgLogService->writeLog(0, $error, $RAWFILE)) {
+// 		if($log) $log->writeErrorLog($error . "\nFailure on write the error on log table.");
+// 	}
+// 	exit();
+// }
 
 $pgLogService->writeLog(1, "Success", $RAWFILE);
