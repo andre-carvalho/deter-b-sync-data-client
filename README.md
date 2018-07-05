@@ -17,6 +17,11 @@ The expected environment to deployment is composed for:
   ```
   apt-get install php5-curl
   ```
+
+  Install the PDO driver for postgres on php.
+  ```
+  apt-get install php-pgsql
+  ```
   
   Install ssmtp. If you use the script of state check (optional)
   ```
