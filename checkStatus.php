@@ -47,7 +47,7 @@ if(!$maxDate) {
 	if($log) $log->writeErrorLog($error . "\nFailure on read the max date from data table.");
 }else {
 	$date = new DateTime($maxDate[0]['max']);
-	
+	$date->modify('-1 day');
 	$data = "Data do dado mais recente no banco: ".$date->format('d-m-Y')."\n";
 }
 
