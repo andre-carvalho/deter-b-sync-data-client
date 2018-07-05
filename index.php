@@ -44,15 +44,18 @@ $error = "";// Used to get the error description from PostgreSQLService methods 
 $RAWFILE = "";// The directory path and filename to write the raw data during download.
 
 // Read the last auditing date from output table 
-$last_date = $pgDataService->readMaxAuditDate($error);
+// $last_date = $pgDataService->readMaxAuditDate($error);
 
-if($last_date===false || count($last_date)!=1) {
-	// table not found or database is off
-	if($log) $log->writeErrorLog($error);
-	$last_date = '2017-08-03';//'2017-07-31';
-}else{
-	$last_date = $last_date[0][0];
-}
+// if($last_date===false || count($last_date)!=1) {
+// 	// table not found or database is off
+// 	if($log) $log->writeErrorLog($error);
+// 	$last_date = '2017-08-03';
+// }else{
+// 	$last_date = $last_date[0][0];
+// }
+
+// Force last date for renew work
+$last_date = '2017-07-31';/// the last PRODES year
 
 $syncService = new HTTPSyncService();
 $RAWFILE = $syncService->downloadLastGeometries($last_date);
