@@ -53,6 +53,25 @@ class PostgreSQLDataService extends PostgreSQLService {
 		$query = "DROP TABLE IF EXISTS ".$tableName.";";
 		return $this->dropTable($tableName, $query, $error);
 	}
+
+	/**
+	 * Truncate the Data table.
+	 * @param string $error, allow read the error message.
+	 * @return boolean, true on success or false otherwise.
+	 */
+	public function truncateDataTable(&$error) {
+
+		$config = ServiceConfiguration::defines();
+
+		if( empty ( $config ) ) {
+			$error = "Missing the metadata tables configuration.";
+			return false;
+		}
+
+		$tableName = $config["SCHEMA"].".".$config["DATA_TABLE"];
+		$query = "TRUNCATE ".$tableName." RESTART IDENTITY;";
+		return $this->execQueryNoResult($tableName, $query, $error);
+	}
 	
 	/**
 	 * Insert data into PostgreSQL table.
@@ -105,8 +124,8 @@ class PostgreSQLDataService extends PostgreSQLService {
 			return false;
 		}
 		
-		if(!$this->dropDataTable($error)) {
-			$error .= "\nFailure on DROP the old database table.";
+		if(!$this->truncateDataTable($error)) {
+			$error .= "\nFailure on TRUNCATE the database table.";
 			$this->writeErrorLog($error);
 			if($this->stop(false)){// rollback
 				$error .= "\nRollback command has failed.";
@@ -114,24 +133,13 @@ class PostgreSQLDataService extends PostgreSQLService {
 			return false;
 		}
 
-		if(!$this->createDataTable($error)) {
-			
-			$error .= "\nFailure on create data table.";
+		if(!$this->pushRawData($data, $error)) {
+			$error .= "\nFailure on push data to data table.";
 			$this->writeErrorLog($error);
 			if($this->stop(false)){// rollback
 				$error .= "\nRollback command has failed.";
 			}
 			return false;
-		}else {
-			
-			if(!$this->pushRawData($data, $error)) {
-				$error .= "\nFailure on push data to data table.";
-				$this->writeErrorLog($error);
-				if($this->stop(false)){// rollback
-					$error .= "\nRollback command has failed.";
-				}
-				return false;
-			}
 		}
 		
 		if($this->stop(true)===false){// commit

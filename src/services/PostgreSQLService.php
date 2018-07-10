@@ -164,5 +164,28 @@ class PostgreSQLService {
 		return true;
 	}
 	
+	/**
+	 * Exec query without response result.
+	 *
+	 * @param string $tableName, the name of one table.
+	 * @param string $sql, the query.
+	 * @param string $error, allow read the error message.
+	 * @return boolean, true on success or false otherwise.
+	 */
+	protected function execQueryNoResult($tableName, $sql, &$error) {
+		if(!$this->pg) {
+			$error = "No database connect.";
+			return false;
+		}
 	
+		if( $this->tableExists($tableName, $error) ) {
+			// Table exists, so remove it.
+			$exec = $this->pg->execQueryScript($sql);
+			if( $exec===false ) {
+				$error = "Failure on exec query over table (".$tableName.").";
+				return false;
+			}
+		}
+		return true;
+	}
 }
